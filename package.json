@@ -1,0 +1,33 @@
+{
+  "name": "algo-client",
+  "version": "0.1.0",
+  "description": "Unofficial desktop client for LeetCode",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "check": "tsx scripts/adapter-check.ts",
+    "sync-problems": "tsx scripts/sync-problems.ts",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "better-sqlite3": "^11.9.0",
+    "leetcode-query": "^2.0.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "electron": "^35.2.0",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^5.0.0",
+    "tsx": "^4.23.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

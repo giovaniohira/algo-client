@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Algo Client — Mockups UI</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      padding: 2rem;
+    }
+    h1 { margin: 0 0 0.5rem; font-size: 1.5rem; }
+    p { color: #888; margin: 0 0 2rem; }
+    .grid {
+      display: grid;
+      gap: 2rem;
+      max-width: 1200px;
+    }
+    figure {
+      margin: 0;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    figcaption {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid #262626;
+    }
+    figcaption strong { display: block; margin-bottom: 0.35rem; font-size: 1.1rem; }
+    figcaption span { color: #888; font-size: 0.9rem; line-height: 1.5; }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Algo Client — Escolha o mockup</h1>
+  <p>Três direções visuais. Diga qual prefere (A, B, C ou combinação).</p>
+
+  <div class="grid">
+    <figure>
+      <img src="mockup-a-obsidian.png" alt="Variante A Obsidian" />
+      <figcaption>
+        <strong>A — Obsidian</strong>
+        <span>Verde esmeralda, dropdown de problemas, botões pill, status bar no rodapé. Minimalista, próximo do app atual.</span>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <img src="mockup-b-aurora.png" alt="Variante B Aurora" />
+      <figcaption>
+        <strong>B — Glass Aurora</strong>
+        <span>Glassmorphism, sidebar de navegação, busca central, stats de streak. Visual mais rico e “SaaS premium”.</span>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <img src="mockup-c-nord.png" alt="Variante C Nord" />
+      <figcaption>
+        <strong>C — Nord Clean</strong>
+        <span>Monocromático com azul, navegação ← 1/3100 →, máximo whitespace. Ultra minimalista estilo Linear.</span>
+      </figcaption>
+    </figure>
+  </div>
+</body>
+</html>
