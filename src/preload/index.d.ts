@@ -7,8 +7,38 @@ export interface ProblemDetail {
   questionFrontendId: string
   acRate: number | null
   sampleTestCase: string
+  exampleTestcases: string
   codeSnippets: Array<{ lang: string; langSlug: string; code: string }>
   topicTags: string[]
+  hints: string[]
+}
+
+export interface SubmissionSummary {
+  id: number
+  statusDisplay: string
+  lang: string
+  runtime: string
+  memory: string
+  timestamp: number
+}
+
+export interface SubmissionDetail {
+  id: number
+  code: string
+  lang: string
+  runtimeDisplay: string
+  memoryDisplay: string
+  timestamp: number
+}
+
+export interface SolutionArticle {
+  id: number
+  title: string
+  content: string
+  viewCount: number
+  tags: string[]
+  author: string
+  voteCount: number
 }
 
 export interface JudgeResult {
@@ -58,6 +88,20 @@ export interface ProblemListResult {
   questions: ProblemSummary[]
 }
 
+export interface CatalogStatus {
+  exists: boolean
+  syncedAt: string | null
+  total: number
+  stale: boolean
+  syncing: boolean
+}
+
+export interface CatalogSyncProgress {
+  phase: 'listing'
+  done: number
+  total: number
+}
+
 export interface AlgoClientApi {
   authStatus: () => Promise<
     | { authenticated: true; profile: Profile }
@@ -65,19 +109,22 @@ export interface AlgoClientApi {
   >
   authLogin: () => Promise<Profile>
   authLogout: () => Promise<{ ok: boolean }>
-  loadProblem: (slug: string) => Promise<{ problem: ProblemDetail; problemId: number }>
+  loadProblem: (slug: string) => Promise<{ problem: ProblemDetail }>
+  listSubmissions: (slug: string, limit?: number) => Promise<SubmissionSummary[]>
+  loadSubmissionDetail: (id: number) => Promise<SubmissionDetail>
+  listSolutions: (slug: string, skip?: number, first?: number) => Promise<SolutionArticle[]>
   listProblems: (opts?: {
     search?: string
     offset?: number
     limit?: number
   }) => Promise<ProblemListResult>
   syncProblemStatuses: () => Promise<Record<string, string | null>>
-  attemptLanguages: () => Promise<Record<string, string[]>>
   tagOptions: () => Promise<Array<{ name: string; slug: string }>>
-  startSession: (problemId: number, language: string, code: string) => Promise<{ attemptId: number }>
-  recordHint: (level: number) => Promise<{ ok: boolean }>
-  recordSolutionViewed: () => Promise<{ ok: boolean }>
-  getElapsed: () => Promise<number>
+  catalogStatus: () => Promise<CatalogStatus>
+  syncCatalog: () => Promise<{ total: number; syncedAt: string }>
+  catalogSlugs: () => Promise<string[]>
+  onCatalogSyncProgress: (callback: (progress: CatalogSyncProgress) => void) => () => void
+  onCatalogSyncDone: (callback: () => void) => () => void
   runCode: (
     slug: string,
     questionId: number,
@@ -89,13 +136,17 @@ export interface AlgoClientApi {
     slug: string,
     questionId: number,
     lang: string,
-    code: string,
-    problemId: number
+    code: string
   ) => Promise<{ result: JudgeResult; outcome: string }>
   windowMinimize: () => Promise<void>
   windowToggleMaximize: () => Promise<boolean>
   windowClose: () => Promise<void>
   windowIsMaximized: () => Promise<boolean>
+  zoomGet: () => Promise<number>
+  zoomIn: () => Promise<number>
+  zoomOut: () => Promise<number>
+  zoomReset: () => Promise<number>
+  onZoomChanged: (callback: (factor: number) => void) => () => void
   onWindowMaximized: (callback: (maximized: boolean) => void) => () => void
 }
 
