@@ -2,13 +2,12 @@ import { BrowserWindow, safeStorage, session } from 'electron'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import { app } from 'electron'
-import { getDb, insertEvent } from './db'
 
-const SESSION_FILE = 'leetcode-session.bin'
+const SESSION_FILE = 'account-session.bin'
 const LOGIN_URL = 'https://leetcode.com/accounts/login/'
-const PARTITION = 'persist:leetcode'
+const PARTITION = 'persist:account'
 
-export interface LeetCodeSession {
+export interface AccountSession {
   leetcodeSession: string
   csrfToken: string
   username?: string
@@ -37,15 +36,15 @@ export function invalidateStoredSession(): void {
   if (existsSync(path)) writeFileSync(path, '')
 }
 
-export function saveSession(sess: LeetCodeSession): void {
+export function saveSession(sess: AccountSession): void {
   writeFileSync(sessionPath(), encrypt(JSON.stringify(sess)))
 }
 
-export function loadSession(): LeetCodeSession | null {
+export function loadSession(): AccountSession | null {
   const path = sessionPath()
   if (!existsSync(path)) return null
   try {
-    return JSON.parse(decrypt(readFileSync(path))) as LeetCodeSession
+    return JSON.parse(decrypt(readFileSync(path))) as AccountSession
   } catch {
     return null
   }
@@ -58,7 +57,7 @@ export function clearSession(): void {
   ses.clearStorageData()
 }
 
-async function readCookies(): Promise<LeetCodeSession | null> {
+async function readCookies(): Promise<AccountSession | null> {
   const ses = session.fromPartition(PARTITION)
   const cookies = await ses.cookies.get({ url: 'https://leetcode.com' })
   const leetcodeSession = cookies.find((c) => c.name === 'LEETCODE_SESSION')?.value
@@ -67,7 +66,7 @@ async function readCookies(): Promise<LeetCodeSession | null> {
   return { leetcodeSession, csrfToken }
 }
 
-async function verifySession(sess: LeetCodeSession): Promise<boolean> {
+async function verifySession(sess: AccountSession): Promise<boolean> {
   const res = await fetch('https://leetcode.com/graphql/', {
     method: 'POST',
     headers: {
@@ -89,18 +88,196 @@ async function verifySession(sess: LeetCodeSession): Promise<boolean> {
   return body.data?.userStatus?.isSignedIn === true
 }
 
-export async function openLoginWindow(): Promise<LeetCodeSession> {
+const LOGIN_WINDOW = { width: 420, height: 660, minWidth: 380, minHeight: 560 } as const
+
+// ponytail: LeetCode login uses hashed CSS-module classes; attribute selectors survive deploys better than exact names.
+const LOGIN_FOCUS_CSS = `
+  [class*="sign-in-page"] > *:not([class*="sign-in-wrapper"]) {
+    display: none !important;
+  }
+
+  nav, footer, [class*="announcement"], [class*="placeholder-top"], [class*="root__"] {
+    display: none !important;
+  }
+
+  html, body, #app {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-height: 100% !important;
+    overflow: hidden !important;
+    background: #f5f5f5 !important;
+  }
+
+  [class*="sign-in-page"],
+  [class*="sign-in-wrapper"],
+  [class*="sign-in-section"],
+  [class*="placeholder-bottom"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  [class*="sign-in-box"] {
+    margin: 0 auto !important;
+    width: calc(100% - 32px) !important;
+    max-width: 400px !important;
+    flex-shrink: 0 !important;
+  }
+`
+
+const LOGIN_FOCUS_JS = String.raw`(() => {
+  if (!window.__algoLoginFocus) {
+    window.__algoLoginFocus = { installed: false, css: false }
+
+    window.__algoLoginFocus.apply = () => {
+      const box = document.querySelector('[class*="sign-in-box"]')
+      if (!box) return false
+
+      for (const el of document.querySelectorAll(
+        'nav, footer, [class*="announcement"], [class*="placeholder-top"], [class*="root__"]'
+      )) {
+        el.style.setProperty('display', 'none', 'important')
+      }
+
+      const page = document.querySelector('[class*="sign-in-page"]')
+      if (page) {
+        for (const child of page.children) {
+          if (!String(child.className).includes('sign-in-wrapper')) {
+            child.style.setProperty('display', 'none', 'important')
+          }
+        }
+      }
+
+      const chain = [
+        document.documentElement,
+        document.body,
+        document.getElementById('app'),
+        page,
+        ...document.querySelectorAll(
+          '[class*="sign-in-wrapper"], [class*="sign-in-section"], [class*="placeholder-bottom"]'
+        )
+      ]
+
+      for (const el of chain) {
+        if (!el) continue
+        el.style.setProperty('width', '100%', 'important')
+        el.style.setProperty('max-width', '100%', 'important')
+        el.style.setProperty('min-width', '0', 'important')
+        el.style.setProperty('overflow-x', 'hidden', 'important')
+        el.style.setProperty('margin', '0', 'important')
+        el.style.setProperty('padding', '0', 'important')
+      }
+
+      for (const el of document.querySelectorAll(
+        '[class*="sign-in-page"], [class*="sign-in-wrapper"], [class*="sign-in-section"], [class*="placeholder-bottom"]'
+      )) {
+        el.style.setProperty('display', 'flex', 'important')
+        el.style.setProperty('align-items', 'center', 'important')
+        el.style.setProperty('justify-content', 'center', 'important')
+        el.style.setProperty('min-height', '100vh', 'important')
+      }
+
+      box.style.setProperty('margin', '0 auto', 'important')
+      box.style.setProperty('width', 'calc(100% - 32px)', 'important')
+      box.style.setProperty('max-width', '400px', 'important')
+
+      document.documentElement.style.setProperty('overflow', 'hidden', 'important')
+      document.body.style.setProperty('overflow', 'hidden', 'important')
+      document.body.style.setProperty('background', '#f5f5f5', 'important')
+      window.scrollTo(0, 0)
+
+      const rect = box.getBoundingClientRect()
+      const centered = Math.abs(rect.left - (window.innerWidth - rect.width) / 2) < 4
+      const visible = rect.left >= -1 && rect.right <= window.innerWidth + 1
+      return centered && visible
+    }
+
+    window.__algoLoginFocus.install = () => {
+      if (window.__algoLoginFocus.installed) return
+      window.__algoLoginFocus.installed = true
+      window.__algoLoginFocus.apply()
+      const obs = new MutationObserver(() => window.__algoLoginFocus.apply())
+      obs.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style']
+      })
+      let n = 0
+      const timer = setInterval(() => {
+        window.__algoLoginFocus.apply()
+        if (++n >= 50) clearInterval(timer)
+      }, 100)
+    }
+  }
+
+  window.__algoLoginFocus.install()
+  return window.__algoLoginFocus.apply()
+})()`
+
+async function focusLoginCard(win: BrowserWindow): Promise<boolean> {
+  const contents = win.webContents as Electron.WebContents & { __algoLoginCss?: boolean }
+  if (!contents.__algoLoginCss) {
+    contents.__algoLoginCss = true
+    await win.webContents.insertCSS(LOGIN_FOCUS_CSS)
+  }
+  try {
+    return Boolean(await win.webContents.executeJavaScript(LOGIN_FOCUS_JS, true))
+  } catch {
+    return false
+  }
+}
+
+async function revealLoginWindow(win: BrowserWindow): Promise<void> {
+  for (let i = 0; i < 40; i++) {
+    if (await focusLoginCard(win)) {
+      win.show()
+      return
+    }
+    await new Promise((r) => setTimeout(r, 100))
+  }
+  win.show()
+}
+
+export async function openLoginWindow(): Promise<AccountSession> {
   return new Promise((resolve, reject) => {
+    const parent = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows().at(0)
+
     const loginWin = new BrowserWindow({
-      width: 900,
-      height: 700,
-      title: 'Login LeetCode',
+      width: LOGIN_WINDOW.width,
+      height: LOGIN_WINDOW.height,
+      minWidth: LOGIN_WINDOW.minWidth,
+      minHeight: LOGIN_WINDOW.minHeight,
+      title: 'Sign in to LeetCode',
+      show: false,
+      center: true,
+      autoHideMenuBar: true,
+      backgroundColor: '#f5f5f5',
+      parent: parent ?? undefined,
+      modal: Boolean(parent),
       webPreferences: {
         partition: PARTITION,
         nodeIntegration: false,
         contextIsolation: true
       }
     })
+
+    loginWin.removeMenu()
+    loginWin.setMenuBarVisibility(false)
+
+    const primeLoginView = (): void => {
+      void focusLoginCard(loginWin)
+    }
+    loginWin.webContents.on('dom-ready', primeLoginView)
+    loginWin.once('ready-to-show', () => void revealLoginWindow(loginWin))
+    loginWin.webContents.on('did-finish-load', primeLoginView)
 
     let settled = false
 
@@ -111,7 +288,6 @@ export async function openLoginWindow(): Promise<LeetCodeSession> {
       if (!(await verifySession(sess))) return
       settled = true
       saveSession(sess)
-      insertEvent('auth_success', {})
       loginWin.close()
       resolve(sess)
     }
@@ -121,7 +297,7 @@ export async function openLoginWindow(): Promise<LeetCodeSession> {
     loginWin.on('closed', () => {
       if (!settled) {
         settled = true
-        reject(new Error('Login cancelado'))
+        reject(new Error('Login cancelled'))
       }
     })
 
@@ -129,7 +305,7 @@ export async function openLoginWindow(): Promise<LeetCodeSession> {
   })
 }
 
-export async function getSession(): Promise<LeetCodeSession | null> {
+export async function getSession(): Promise<AccountSession | null> {
   const stored = loadSession()
   if (stored) return stored
   return readCookies()
@@ -137,14 +313,10 @@ export async function getSession(): Promise<LeetCodeSession | null> {
 
 export async function logout(): Promise<void> {
   clearSession()
-  insertEvent('auth_expired', { reason: 'logout' })
 }
 
 export function storeUsername(username: string): void {
   const sess = loadSession()
   if (!sess) return
   saveSession({ ...sess, username })
-  getDb()
-    .prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)')
-    .run('leetcode_username', username)
 }
