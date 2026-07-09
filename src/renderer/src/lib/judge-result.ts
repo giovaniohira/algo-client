@@ -1,6 +1,7 @@
 import type { JudgeResult } from '../../../preload/index.d'
 
-export function judgeErrorDetail(result: JudgeResult): string | null {
+export function judgeErrorDetail(result: JudgeResult | null | undefined): string | null {
+  if (!result) return null
   return (
     result.fullCompileError ??
     result.compileError ??

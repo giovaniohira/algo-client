@@ -1,5 +1,8 @@
 import type { Monaco } from '@monaco-editor/react'
-import { languages } from 'monaco-editor'
+import type { languages } from 'monaco-editor'
+
+// ponytail: mirrors languages.IndentAction.Indent — avoids eager monaco-editor import
+const INDENT = 1 as languages.IndentAction
 
 const KEYWORDS = [
   'False', 'None', 'True', '_', 'and', 'as', 'assert', 'async', 'await', 'break',
@@ -44,7 +47,7 @@ const conf: languages.LanguageConfiguration = {
   onEnterRules: [
     {
       beforeText: /^\s*(?:def|class|for|if|elif|else|while|try|with|finally|except|async).*?:\s*$/,
-      action: { indentAction: languages.IndentAction.Indent }
+      action: { indentAction: INDENT }
     }
   ],
   folding: {

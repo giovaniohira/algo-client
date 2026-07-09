@@ -25,8 +25,8 @@ const c = {
   markup: '73daca'
 } as const
 
-export function defineDsaNordTheme(monaco: Monaco): void {
-  monaco.editor.defineTheme('dsa-nord', {
+export function defineAlgoNordTheme(monaco: Monaco): void {
+  monaco.editor.defineTheme('algo-nord', {
     base: 'vs-dark',
     inherit: true,
     rules: [
