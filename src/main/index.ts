@@ -1,10 +1,39 @@
 import { app, BrowserWindow, ipcMain, safeStorage, session } from 'electron'
 import { join } from 'path'
-import { initDb } from './db'
 import { registerIpcHandlers } from './ipc'
-import { warmLocalCatalog } from './leetcode/local-catalog'
+import { warmLocalCatalog, invalidateCatalogCache, getLocalTotal, getCatalogSyncedAt } from './platform/local-catalog'
+import { maybeSyncCatalog, STALE_MS } from './platform/catalog-sync'
+import { applyZoom, attachZoomShortcuts, loadZoomFactor } from './zoom'
 
 const isDev = !app.isPackaged
+
+function broadcastCatalogProgress(progress: { phase: string; done: number; total: number }): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send('catalog:sync-progress', progress)
+  }
+}
+
+function broadcastCatalogDone(): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send('catalog:sync-done')
+  }
+}
+
+async function autoSyncCatalog(): Promise<void> {
+  try {
+    await maybeSyncCatalog(() => {
+      const total = getLocalTotal()
+      const syncedAt = getCatalogSyncedAt()
+      const stale = !syncedAt || Date.now() - new Date(syncedAt).getTime() > STALE_MS
+      return { missing: total === 0, stale: total > 0 && stale }
+    }, broadcastCatalogProgress)
+    invalidateCatalogCache()
+    warmLocalCatalog()
+    broadcastCatalogDone()
+  } catch {
+    // ponytail: stale/missing catalog keeps bundled copy; user can retry manually
+  }
+}
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -24,7 +53,14 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow.show())
+  mainWindow.on('ready-to-show', () => {
+    applyZoom(mainWindow, loadZoomFactor())
+    mainWindow.show()
+  })
+
+  attachZoomShortcuts(mainWindow, (factor) => {
+    mainWindow.webContents.send('window:zoom-changed', factor)
+  })
 
   const sendMaximized = (maximized: boolean) => {
     mainWindow.webContents.send('window:maximized', maximized)
@@ -40,10 +76,10 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  initDb()
   warmLocalCatalog()
   registerIpcHandlers()
   createWindow()
+  void autoSyncCatalog()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
