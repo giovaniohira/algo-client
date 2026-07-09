@@ -10,7 +10,8 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": ["src/renderer/src/*"]
+      "@renderer/*": ["src/renderer/src/*"],
+      "monaco-editor": ["src/renderer/src/lib/monaco-entry.ts"]
     }
   },
   "include": ["src/renderer/src/**/*", "src/preload/index.d.ts"]
