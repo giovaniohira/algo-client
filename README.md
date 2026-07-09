@@ -54,6 +54,14 @@ Pre-built Windows installers are published on every tagged release:
 | macOS (`.dmg`) | 🚧 Build locally with `npm run dist` |
 | Linux (AppImage) | 🚧 Build locally with `npm run dist` |
 
+### Windows SmartScreen warning?
+
+On first install, Windows may show **"Windows protected your PC"** with *Unknown publisher*. This is expected for unsigned executables — the app is safe, but Windows has no way to verify who built it.
+
+**As a user:** click **Run anyway** (or *More info* → *Run anyway*).
+
+**As a maintainer:** the only way to remove this warning is [Authenticode code signing](CONTRIBUTING.md#windows-code-signing-removes-smartscreen-warning). Once a certificate is configured in GitHub Secrets, releases are signed automatically.
+
 ## Screenshots
 
 <!-- Add screenshots after first public release -->
@@ -115,12 +123,14 @@ See [ROADMAP.md](ROADMAP.md) for planned improvements and known gaps.
 
 ## Contributing
 
-1. Fork the repo
-2. Create a branch (`git checkout -b feat/my-idea`)
-3. Commit with [Conventional Commits](https://www.conventionalcommits.org/) style (`feat:`, `fix:`, `chore:`)
-4. Open a PR against `main`
+We welcome contributions! Please read:
 
-Bug reports and feature requests are welcome via GitHub Issues.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, PR workflow, code style
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community guidelines
+- [SECURITY.md](SECURITY.md) — reporting vulnerabilities privately
+- [CHANGELOG.md](CHANGELOG.md) — version history
+
+Bug reports and feature requests: [open an issue](https://github.com/giovaniohira/algo-client/issues).
 
 ## Tech stack
 
