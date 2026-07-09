@@ -1,6 +1,6 @@
 <div align="center">
 
-# Algo Client
+<img src="assets/logo-readme.svg" alt="Algo Client" width="420">
 
 **Desktop LeetCode client — fast, focused, offline-friendly browsing.**
 
@@ -93,6 +93,7 @@ npm run dev
 | `npm run dist:win` | Build Windows installer |
 | `npm run sync-problems` | Sync local problem catalog from LeetCode |
 | `npm run check` | Adapter self-check against live API |
+| `npm run export-logos` | Regenerate PNG icons from SVG sources |
 | `npm run preview` | Preview production build |
 
 ### Project layout

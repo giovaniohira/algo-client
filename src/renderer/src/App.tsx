@@ -6,6 +6,7 @@ import { ElectronRequired } from './components/ElectronRequired'
 import { Header } from './components/Header'
 import { hasApi, api } from './lib/api'
 import { TitleBar } from './components/TitleBar'
+import { TitleBarBrand } from './components/TitleBarBrand'
 import { ProblemPicker } from './components/ProblemPicker'
 import { OutputPanel } from './components/OutputPanel'
 import { ProblemSidebar } from './components/ProblemSidebar'
@@ -309,7 +310,9 @@ export default function App() {
   if (loading) {
     return (
       <div className="screen screen-chrome">
-        <TitleBar minimal />
+        <TitleBar minimal>
+          <TitleBarBrand compact />
+        </TitleBar>
         <div className="screen-body center">
           <span className="loading-dot">Loading</span>
         </div>

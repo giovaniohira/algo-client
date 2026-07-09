@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain, safeStorage, session } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeImage, safeStorage, session } from 'electron'
+import { existsSync } from 'fs'
 import { join } from 'path'
 import { registerIpcHandlers } from './ipc'
 import { warmLocalCatalog, invalidateCatalogCache, getLocalTotal, getCatalogSyncedAt } from './platform/local-catalog'
@@ -6,6 +7,14 @@ import { maybeSyncCatalog, STALE_MS } from './platform/catalog-sync'
 import { applyZoom, attachZoomShortcuts, loadZoomFactor } from './zoom'
 
 const isDev = !app.isPackaged
+
+function windowIcon(): Electron.NativeImage | undefined {
+  const path = app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(process.cwd(), 'build', 'icon.png')
+  if (!existsSync(path)) return undefined
+  return nativeImage.createFromPath(path)
+}
 
 function broadcastCatalogProgress(progress: { phase: string; done: number; total: number }): void {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -45,6 +54,7 @@ function createWindow(): void {
     frame: process.platform === 'darwin',
     autoHideMenuBar: true,
     backgroundColor: '#121212',
+    icon: windowIcon(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,

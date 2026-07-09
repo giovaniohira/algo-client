@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { FadeIn } from './FadeIn'
+import { LogoMark } from './LogoMark'
 import { TitleBar } from './TitleBar'
+import { TitleBarBrand } from './TitleBarBrand'
 import { api, hasApi } from '../lib/api'
 
 const LANG_COUNT = 7
@@ -59,7 +61,7 @@ export function LoginScreen({ error, onLogin }: Props) {
   return (
     <div className="screen screen-chrome">
       <TitleBar minimal>
-        <span className="titlebar-label">Algo Client</span>
+        <TitleBarBrand />
       </TitleBar>
       <div className="screen-body login-layout">
         <div className="login-backdrop" aria-hidden="true">
@@ -69,6 +71,10 @@ export function LoginScreen({ error, onLogin }: Props) {
 
         <section className="login-hero" aria-label="About Algo Client">
           <FadeIn className="login-hero-inner" delay={60}>
+            <div className="login-hero-brand">
+              <LogoMark size={56} />
+              <span className="login-hero-name">Algo Client</span>
+            </div>
             <h1 className="login-headline">
               LeetCode,
               <br />

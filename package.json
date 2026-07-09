@@ -19,8 +19,9 @@
     "preview": "electron-vite preview",
     "check": "tsx scripts/adapter-check.ts",
     "sync-problems": "tsx scripts/sync-problems.ts",
-    "dist": "npm run build && electron-builder",
-    "dist:win": "npm run build && electron-builder --win"
+    "export-logos": "tsx scripts/export-logos.ts",
+    "dist": "npm run export-logos && npm run build && electron-builder",
+    "dist:win": "npm run export-logos && npm run build && electron-builder --win"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -29,6 +30,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
@@ -42,9 +44,12 @@
   "build": {
     "appId": "com.algoclient.desktop",
     "productName": "Algo Client",
-    "electronLanguages": ["en-US"],
+    "electronLanguages": [
+      "en-US"
+    ],
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "out/**/*"
@@ -53,21 +58,34 @@
       {
         "from": "data/problems",
         "to": "data/problems",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/icon.png",
+        "to": "icon.png"
       }
     ],
+    "icon": "build/icon.png",
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "artifactName": "${productName}-${version}-setup.${ext}",
       "publisherName": "Giovani Ohira",
       "signAndEditExecutable": true
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.developer-tools"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "category": "Development"
     },
     "publish": {

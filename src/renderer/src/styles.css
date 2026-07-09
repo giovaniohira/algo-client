@@ -116,9 +116,7 @@ body,
 }
 
 .titlebar-brand .brand-mark {
-  width: 22px;
-  height: 22px;
-  font-size: 0.55rem;
+  flex-shrink: 0;
 }
 
 .titlebar-brand .brand-name {
@@ -192,17 +190,7 @@ body,
 }
 
 .brand-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  display: grid;
-  place-items: center;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: -0.02em;
+  flex-shrink: 0;
 }
 
 .brand-name {
@@ -2259,6 +2247,20 @@ body,
 
 .login-headline-accent {
   color: #ffa116;
+}
+
+.login-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 1.25rem;
+}
+
+.login-hero-name {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--text-secondary);
 }
 
 .login-lede {
