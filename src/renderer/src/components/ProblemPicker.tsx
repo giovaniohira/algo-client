@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import type { ProblemDetail, ProblemSummary } from '../../../../preload/index.d'
+import { api } from '../lib/api'
 
 type ProblemStatus = 'todo' | 'attempted' | 'solved'
 type FilterOp = 'is' | 'is_not'
@@ -43,14 +44,14 @@ interface Props {
   children: (parts: { trigger: ReactNode; panel: ReactNode }) => ReactNode
 }
 
-const DEFAULT_FILTER_KINDS: FilterKind[] = ['status', 'difficulty', 'topics', 'language']
+const DEFAULT_FILTER_KINDS: FilterKind[] = ['status', 'difficulty', 'topics']
 
 const ADD_FILTER_KINDS: FilterDef[] = [
   { kind: 'frequency', label: 'Frequency', accent: true, premium: true },
   { kind: 'companies', label: 'Companies', accent: true, premium: true },
   { kind: 'position', label: 'Position', accent: true, premium: true },
   { kind: 'position_level', label: 'Position Level', accent: true, premium: true },
-  { kind: 'contest', label: 'Contest pt.', accent: true, premium: true },
+  { kind: 'contest', label: 'Contest', accent: true, premium: true },
   { kind: 'question_id', label: 'Question ID' },
   { kind: 'acceptance', label: 'Acceptance' },
   { kind: 'last_submit', label: 'Last Submit' },
@@ -62,7 +63,6 @@ const ALL_FILTER_DEFS: FilterDef[] = [
   { kind: 'status', label: 'Status' },
   { kind: 'difficulty', label: 'Difficulty' },
   { kind: 'topics', label: 'Topics' },
-  { kind: 'language', label: 'Language' },
   ...ADD_FILTER_KINDS
 ]
 
@@ -161,14 +161,10 @@ function optionsFor(kind: FilterKind, allTags: Array<{ name: string; slug: strin
 }
 
 function isSupported(kind: FilterKind): boolean {
-  return ['status', 'difficulty', 'topics', 'language', 'question_id', 'acceptance'].includes(kind)
+  return ['status', 'difficulty', 'topics', 'question_id', 'acceptance'].includes(kind)
 }
 
-function matchesRow(
-  p: ProblemSummary,
-  row: FilterRow,
-  attemptLangs: Record<string, string[]>
-): boolean {
+function matchesRow(p: ProblemSummary, row: FilterRow): boolean {
   if (!row.value) return true
 
   let matched = true
@@ -181,9 +177,6 @@ function matchesRow(
       break
     case 'topics':
       matched = p.tags.some((t) => t.slug === row.value)
-      break
-    case 'language':
-      matched = attemptLangs[p.slug]?.includes(row.value) ?? false
       break
     case 'question_id':
       matched = p.id === row.value
@@ -514,7 +507,6 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
   const [query, setQuery] = useState('')
   const [catalog, setCatalog] = useState<ProblemSummary[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
-  const [attemptLangs, setAttemptLangs] = useState<Record<string, string[]>>({})
   const [tagOptions, setTagOptions] = useState<Array<{ name: string; slug: string }>>([])
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [addMenuOpen, setAddMenuOpen] = useState(false)
@@ -536,7 +528,7 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
     if (catalog.length > 0) return catalog
     setLoadingCatalog(true)
     try {
-      const data = await window.algoClient.listProblems()
+      const data = await api().listProblems()
       const questions = data.questions ?? []
       setCatalog(questions)
       return questions
@@ -553,7 +545,7 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
 
   useEffect(() => {
     if (catalog.length === 0) return
-    void window.algoClient
+    void api()
       .syncProblemStatuses()
       .then((statuses) => {
         if (!statuses || Object.keys(statuses).length === 0) return
@@ -568,8 +560,7 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
   }, [catalog.length])
 
   useEffect(() => {
-    void window.algoClient.attemptLanguages().then(setAttemptLangs).catch(() => setAttemptLangs({}))
-    void window.algoClient.tagOptions().then(setTagOptions).catch(() => setTagOptions([]))
+    void api().tagOptions().then(setTagOptions).catch(() => setTagOptions([]))
   }, [])
 
   const closeDropdowns = useCallback(() => {
@@ -642,10 +633,10 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
       if (!matchesQuery) return false
       if (activeFilters.length === 0) return true
 
-      const checks = activeFilters.map((row) => matchesRow(p, row, attemptLangs))
+      const checks = activeFilters.map((row) => matchesRow(p, row))
       return matchMode === 'all' ? checks.every(Boolean) : checks.some(Boolean)
     })
-  }, [catalog, query, activeFilters, matchMode, attemptLangs])
+  }, [catalog, query, activeFilters, matchMode])
 
   const availableAddKinds = useMemo(
     () => ADD_FILTER_KINDS.filter((d) => !filters.some((f) => f.kind === d.kind)),
@@ -775,7 +766,7 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
         className={`problem-list-btn${open ? ' active' : ''}`}
         onClick={openList}
         disabled={busy}
-        aria-label="Lista de problemas"
+        aria-label="Problem list"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 6h18M3 12h18M3 18h18" />
@@ -807,8 +798,8 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
                 setFiltersOpen((v) => !v)
                 closeDropdowns()
               }}
-              aria-label="Filtros"
-              title="Filtros"
+              aria-label="Filters"
+              title="Filters"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
@@ -818,11 +809,11 @@ export function ProblemPicker({ problem, busy, isPremium, onSelect, children }: 
 
           <ul className="search-results" aria-labelledby={uid}>
             <span id={uid} className="sr-only">
-              Lista de problemas
+              Problem list
             </span>
-            {loadingCatalog && <li className="search-empty">Carregando...</li>}
+            {loadingCatalog && <li className="search-empty">Loading...</li>}
             {!loadingCatalog && filtered.length === 0 && (
-              <li className="search-empty">Nenhum resultado</li>
+              <li className="search-empty">No results</li>
             )}
             {filtered.map((q) => {
               const status = normStatus(q.status)
