@@ -1,7 +1,14 @@
 import { BrowserWindow, ipcMain } from 'electron'
-import { getDb, getAttemptLanguagesBySlug, insertEvent } from './db'
 import {
-  clearSession,
+  applyZoom,
+  attachZoomShortcuts,
+  getZoom,
+  loadZoomFactor,
+  zoomIn,
+  zoomOut,
+  zoomReset
+} from './zoom'
+import {
   getSession,
   invalidateStoredSession,
   loadSession,
@@ -13,69 +20,39 @@ import {
   getAdapter,
   outcomeFromResult,
   resetAdapter,
-  type ProblemDetail
-} from './leetcode/adapter'
-import { loadLocalSummaries, loadLocalTagOptions, getLocalTotal, warmLocalCatalog } from './leetcode/local-catalog'
+} from './platform/adapter'
 import {
-  elapsedSeconds,
-  finishAttempt,
-  getActiveAttempt,
-  recordHint,
-  recordSolutionViewed,
-  startAttempt,
-  updateCode
-} from './session-recorder'
+  isCatalogSyncing,
+  syncCatalog,
+  STALE_MS,
+  type SyncProgress
+} from './platform/catalog-sync'
+import {
+  loadLocalSummaries,
+  loadLocalTagOptions,
+  getLocalTotal,
+  warmLocalCatalog,
+  invalidateCatalogCache,
+  loadSortedSlugs,
+  getCatalogSyncedAt
+} from './platform/local-catalog'
+
+function broadcastCatalogProgress(progress: SyncProgress): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send('catalog:sync-progress', progress)
+  }
+}
+
+function broadcastCatalogDone(): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send('catalog:sync-done')
+  }
+}
 
 async function requireSession() {
   const sess = await getSession()
-  if (!sess) throw new Error('Não autenticado')
+  if (!sess) throw new Error('Not authenticated')
   return sess
-}
-
-function upsertProblem(p: ProblemDetail): number {
-  const existing = getDb()
-    .prepare('SELECT id FROM problems WHERE user_id = ? AND source = ? AND external_id = ?')
-    .get('local', 'leetcode', p.questionId) as { id: number } | undefined
-
-  if (existing) {
-    getDb()
-      .prepare(
-        `UPDATE problems SET slug = ?, title = ?, difficulty = ?, url = ?, ac_rate = ?,
-         starter_code = ?, sample_test_case = ?, question_id = ? WHERE id = ?`
-      )
-      .run(
-        p.slug,
-        p.title,
-        p.difficulty,
-        `https://leetcode.com/problems/${p.slug}/`,
-        p.acRate,
-        JSON.stringify(p.codeSnippets),
-        p.sampleTestCase,
-        parseInt(p.questionId, 10),
-        existing.id
-      )
-    return existing.id
-  }
-
-  const result = getDb()
-    .prepare(
-      `INSERT INTO problems (user_id, source, external_id, slug, title, difficulty, url, ac_rate, starter_code, sample_test_case, question_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
-      'local',
-      'leetcode',
-      p.questionId,
-      p.slug,
-      p.title,
-      p.difficulty,
-      `https://leetcode.com/problems/${p.slug}/`,
-      p.acRate,
-      JSON.stringify(p.codeSnippets),
-      p.sampleTestCase,
-      parseInt(p.questionId, 10)
-    )
-  return Number(result.lastInsertRowid)
 }
 
 function senderWindow(event: Electron.IpcMainInvokeEvent): BrowserWindow | null {
@@ -106,6 +83,35 @@ export function registerIpcHandlers(): void {
     return senderWindow(event)?.isMaximized() ?? false
   })
 
+  ipcMain.handle('window:zoom-get', (event) => {
+    const win = senderWindow(event)
+    return win ? getZoom(win) : loadZoomFactor()
+  })
+
+  ipcMain.handle('window:zoom-in', (event) => {
+    const win = senderWindow(event)
+    if (!win) return loadZoomFactor()
+    const factor = zoomIn(win)
+    win.webContents.send('window:zoom-changed', factor)
+    return factor
+  })
+
+  ipcMain.handle('window:zoom-out', (event) => {
+    const win = senderWindow(event)
+    if (!win) return loadZoomFactor()
+    const factor = zoomOut(win)
+    win.webContents.send('window:zoom-changed', factor)
+    return factor
+  })
+
+  ipcMain.handle('window:zoom-reset', (event) => {
+    const win = senderWindow(event)
+    if (!win) return loadZoomFactor()
+    const factor = zoomReset(win)
+    win.webContents.send('window:zoom-changed', factor)
+    return factor
+  })
+
   ipcMain.handle('auth:status', async () => {
     const sess = await getSession()
     if (!sess) return { authenticated: false as const }
@@ -117,7 +123,7 @@ export function registerIpcHandlers(): void {
     } catch {
       invalidateStoredSession()
       resetAdapter()
-      return { authenticated: false as const, error: 'Sessão expirada' }
+      return { authenticated: false as const, error: 'Session expired' }
     }
   })
 
@@ -127,7 +133,6 @@ export function registerIpcHandlers(): void {
     const adapter = await getAdapter(sess)
     const profile = await adapter.getProfile()
     storeUsername(profile.username)
-    insertEvent('sync_completed', { source: 'login' })
     return profile
   })
 
@@ -141,8 +146,25 @@ export function registerIpcHandlers(): void {
     const sess = await requireSession()
     const adapter = await getAdapter(sess)
     const problem = await adapter.getProblem(slug)
-    const problemId = upsertProblem(problem)
-    return { problem, problemId }
+    return { problem }
+  })
+
+  ipcMain.handle('problem:submissions', async (_e, slug: string, limit?: number) => {
+    const sess = await requireSession()
+    const adapter = await getAdapter(sess)
+    return adapter.getSubmissions(slug, limit ?? 50)
+  })
+
+  ipcMain.handle('problem:submission-detail', async (_e, id: number) => {
+    const sess = await requireSession()
+    const adapter = await getAdapter(sess)
+    return adapter.getSubmissionDetail(id)
+  })
+
+  ipcMain.handle('problem:solutions', async (_e, slug: string, skip?: number, first?: number) => {
+    const sess = await requireSession()
+    const adapter = await getAdapter(sess)
+    return adapter.getSolutionArticles(slug, skip ?? 0, first ?? 20)
   })
 
   ipcMain.handle(
@@ -163,59 +185,47 @@ export function registerIpcHandlers(): void {
     }
   })
 
-  ipcMain.handle('problem:attempt-languages', () => {
-    try {
-      return getAttemptLanguagesBySlug()
-    } catch {
-      return {}
+  ipcMain.handle('problem:tag-options', () => loadLocalTagOptions())
+
+  ipcMain.handle('catalog:status', () => {
+    const total = getLocalTotal()
+    const syncedAt = getCatalogSyncedAt()
+    const stale = !syncedAt || Date.now() - new Date(syncedAt).getTime() > STALE_MS
+    return {
+      exists: total > 0,
+      syncedAt,
+      total,
+      stale,
+      syncing: isCatalogSyncing()
     }
   })
 
-  ipcMain.handle('problem:tag-options', () => loadLocalTagOptions())
-
-  ipcMain.handle('session:start', (_e, problemId: number, language: string, code: string) => {
-    const attempt = startAttempt(problemId, language, code)
-    return { attemptId: attempt.id }
+  ipcMain.handle('catalog:sync', async () => {
+    const catalog = await syncCatalog({}, broadcastCatalogProgress)
+    invalidateCatalogCache()
+    warmLocalCatalog()
+    broadcastCatalogDone()
+    return { total: catalog.total, syncedAt: catalog.syncedAt }
   })
 
-  ipcMain.handle('session:hint', (_e, level: number) => {
-    recordHint(level)
-    return { ok: true }
-  })
-
-  ipcMain.handle('session:solution-viewed', () => {
-    recordSolutionViewed()
-    return { ok: true }
-  })
-
-  ipcMain.handle('session:elapsed', () => elapsedSeconds())
+  ipcMain.handle('catalog:slugs', () => loadSortedSlugs())
 
   ipcMain.handle(
-    'leetcode:run',
+    'judge:run',
     async (_e, slug: string, questionId: number, lang: string, code: string, dataInput: string) => {
       const sess = await requireSession()
       const adapter = await getAdapter(sess)
-      updateCode(code)
-      insertEvent('code_run', { slug })
-      const result = await adapter.runCode(slug, questionId, lang, code, dataInput)
-      return result
+      return adapter.runCode(slug, questionId, lang, code, dataInput)
     }
   )
 
   ipcMain.handle(
-    'leetcode:submit',
-    async (_e, slug: string, questionId: number, lang: string, code: string, problemId: number) => {
+    'judge:submit',
+    async (_e, slug: string, questionId: number, lang: string, code: string) => {
       const sess = await requireSession()
       const adapter = await getAdapter(sess)
-      updateCode(code)
-
-      if (!getActiveAttempt()) {
-        startAttempt(problemId, lang, code)
-      }
-
       const result = await adapter.submitCode(slug, questionId, lang, code)
       const outcome = outcomeFromResult(result)
-      finishAttempt(result, outcome)
       return { result, outcome }
     }
   )
