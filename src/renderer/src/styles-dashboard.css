@@ -132,3 +132,79 @@
   box-shadow: var(--dash-shadow-hover);
 }
 
+/* â”€â”€ Hero header â”€â”€ */
+
+.dash-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  flex-shrink: 0;
+}
+
+.dash-hero-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-hero-right {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-shrink: 0;
+}
+
+.dash-hero-left h1 {
+  margin: 0 0 8px;
+  font-size: var(--dash-greeting);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.dash-hero-left p {
+  margin: 0;
+  font-size: var(--dash-secondary);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.dash-hero-avatar-btn {
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 0;
+  transition: var(--dash-transition);
+}
+
+.dash-hero-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 157, 0, 0.5);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 157, 0, 0.1);
+  transition: var(--dash-transition);
+}
+
+.dash-hero-avatar-btn:hover .dash-hero-avatar {
+  border-color: var(--lc-orange-bright);
+  transform: scale(1.03);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(255, 157, 0, 0.15);
+}
+
+.dash-hero-avatar-fallback {
+  display: inline-grid;
+  place-items: center;
+  background: var(--surface-2);
+  font-size: var(--dash-caption);
+  font-weight: 600;
+  color: var(--lc-orange);
+}
+
