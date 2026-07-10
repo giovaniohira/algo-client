@@ -1,6 +1,6 @@
 {
   "name": "algo-client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Unofficial desktop client for LeetCode — Monaco editor, local catalog, run/submit",
   "author": "Giovani Ohira",
   "license": "MIT",
