@@ -1,4 +1,4 @@
-export interface ProblemDetail {
+﻿export interface ProblemDetail {
   slug: string
   title: string
   difficulty: string
@@ -68,6 +68,9 @@ export interface Profile {
   username: string
   ranking: number
   solved: number
+  solvedEasy: number
+  solvedMedium: number
+  solvedHard: number
   avatarUrl: string
   isPremium: boolean
 }
