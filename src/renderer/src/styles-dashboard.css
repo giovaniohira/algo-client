@@ -477,3 +477,35 @@
   color: var(--lc-orange);
 }
 
+/* â”€â”€ Grid panels â”€â”€ */
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--dash-gap);
+}
+
+.dash-grid-2 {
+  grid-template-columns: 1fr 2fr;
+  align-items: stretch;
+}
+
+.dash-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+  align-items: stretch;
+}
+
+.dash-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  min-width: 0;
+  height: 100%;
+}
+
+.dash-panel-performance {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
