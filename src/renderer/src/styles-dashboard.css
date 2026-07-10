@@ -112,3 +112,23 @@
   gap: var(--dash-gap);
 }
 
+/* â”€â”€ Elevated cards â”€â”€ */
+
+.dash-panel,
+.dash-continue,
+.dash-action-card {
+  border: 1px solid var(--dash-border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--dash-shadow);
+  transition: var(--dash-transition);
+}
+
+.dash-panel:hover,
+.dash-continue:hover,
+.dash-action-card:hover {
+  background: var(--dash-card-bg-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--dash-shadow-hover);
+}
+
