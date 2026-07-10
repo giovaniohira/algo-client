@@ -115,3 +115,40 @@ export function activityHeatmap(): number[][] {
   }
   return weeks
 }
+
+const FIRST_LOGIN_KEY = 'algo-first-login'
+export function ensureFirstLogin(): string {
+  try {
+    const existing = localStorage.getItem(FIRST_LOGIN_KEY)
+    if (existing) return existing
+    const now = new Date().toISOString()
+    localStorage.setItem(FIRST_LOGIN_KEY, now)
+    return now
+  } catch {
+    return new Date().toISOString()
+  }
+}
+
+export function formatRelativePt(ms: number): string {
+  const diff = Date.now() - ms
+  const min = Math.floor(diff / 60_000)
+  if (min < 1) return 'agora'
+  if (min < 60) return `${min}min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `${h}h`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}d`
+  return new Date(ms).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
+
+export function formatRelative(ms: number): string {
+  const diff = Date.now() - ms
+  const min = Math.floor(diff / 60_000)
+  if (min < 1) return 'just now'
+  if (min < 60) return `${min}m`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `${h}h`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}d`
+  return new Date(ms).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
+}
