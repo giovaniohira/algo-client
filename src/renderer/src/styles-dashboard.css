@@ -509,3 +509,110 @@
   flex: 1;
 }
 
+/* â”€â”€ Recent list â”€â”€ */
+
+.dash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dash-list li + li {
+  border-top: 1px solid var(--dash-border-subtle);
+}
+
+.dash-list-empty {
+  padding: 8px 0;
+  font-size: var(--dash-body);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.dash-recent-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 140px;
+  padding: 16px 12px;
+  text-align: center;
+}
+
+.dash-recent-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--dash-border-subtle);
+  color: var(--text-muted);
+}
+
+.dash-recent-empty-title {
+  margin: 0 0 4px;
+  font-size: var(--dash-body);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.dash-recent-empty-desc {
+  margin: 0;
+  font-size: var(--dash-secondary);
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 220px;
+}
+
+.dash-list-btn {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: color 0.22s ease;
+}
+
+.dash-list-btn:hover .dash-list-title {
+  color: var(--lc-orange);
+}
+
+.dash-list-title {
+  font-size: var(--dash-body);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-list-time {
+  font-size: var(--dash-secondary);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-panel-link {
+  margin-top: 14px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--lc-orange);
+  font-size: var(--dash-body);
+  cursor: pointer;
+  transition: color 0.22s ease;
+}
+
+.dash-panel-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
