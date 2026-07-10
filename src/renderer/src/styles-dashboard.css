@@ -851,3 +851,52 @@
   transform: translateX(3px);
 }
 
+/* â”€â”€ Buttons / links â”€â”€ */
+
+.dash-link-btn {
+  border: 1px solid rgba(255, 157, 0, 0.4);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--lc-orange);
+  font-size: var(--dash-body);
+  font-weight: 500;
+  padding: 8px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: var(--dash-transition);
+}
+
+.dash-link-btn:hover {
+  background: var(--lc-orange-dim);
+}
+
+.dash-link-danger {
+  border-color: transparent;
+  color: #f87171;
+}
+
+.dash-link-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dash-footnote {
+  margin: 0;
+  font-size: var(--dash-secondary);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.dash-footnote-center {
+  text-align: center;
+}
+
+.dash-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dash-status-dot.tone-ok { background: var(--success); }
+
