@@ -1,4 +1,4 @@
-import { LeetCode, Credential } from 'leetcode-query'
+﻿import { LeetCode, Credential } from 'leetcode-query'
 import type { AccountSession } from '../auth'
 import { formatSolutionContent } from './solution-content'
 
@@ -200,6 +200,9 @@ export class PlatformAdapter {
     username: string
     ranking: number
     solved: number
+    solvedEasy: number
+    solvedMedium: number
+    solvedHard: number
     avatarUrl: string
     isPremium: boolean
   }> {
