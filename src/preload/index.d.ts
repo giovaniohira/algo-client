@@ -1,4 +1,4 @@
-﻿export interface ProblemDetail {
+export interface ProblemDetail {
   slug: string
   title: string
   difficulty: string
@@ -64,6 +64,13 @@ export interface JudgeResult {
   submissionId?: string
 }
 
+export interface LeetCodeBadge {
+  id: string
+  displayName: string
+  icon: string
+  creationDate?: string
+}
+
 export interface Profile {
   username: string
   ranking: number
@@ -73,6 +80,9 @@ export interface Profile {
   solvedHard: number
   avatarUrl: string
   isPremium: boolean
+  submissionCalendar: string
+  badges: LeetCodeBadge[]
+  activeBadge: LeetCodeBadge | null
 }
 
 export interface ProblemSummary {
