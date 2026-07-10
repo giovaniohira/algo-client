@@ -1113,3 +1113,135 @@
   color: var(--text-muted);
 }
 
+/* â”€â”€ Badges â”€â”€ */
+
+.dash-badge-active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 6px;
+  border-radius: 999px;
+  font-size: var(--dash-caption);
+  font-weight: 500;
+  border: 1px solid rgba(255, 157, 0, 0.4);
+  color: var(--lc-orange);
+  background: var(--lc-orange-dim);
+}
+
+.dash-badge-active-pill img,
+.dash-badge-active-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.dash-badge-icon-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+}
+
+.dash-badge-active-pill .dash-badge-icon-fallback {
+  width: 18px;
+  height: 18px;
+}
+
+.dash-badges-empty {
+  margin: 0;
+  font-size: var(--dash-body);
+  color: var(--text-muted);
+}
+
+.dash-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.dash-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--dash-border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+  transition: var(--dash-transition);
+}
+
+.dash-badge.is-active {
+  border-color: rgba(255, 157, 0, 0.35);
+  background: var(--lc-orange-dim);
+}
+
+.dash-badge-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.dash-badge-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dash-view .titlebar-minimal {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .dash-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dash-grid-3 .dash-panel:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .dash-page {
+    padding: 20px;
+  }
+
+  .dash-hero-left h1 {
+    font-size: 32px;
+  }
+
+  .dash-grid,
+  .dash-grid-2,
+  .dash-grid-3,
+  .dash-profile-grid,
+  .dash-actions-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-grid-3 .dash-panel:last-child {
+    grid-column: auto;
+  }
+
+  .dash-hero {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .dash-hero-right {
+    align-self: flex-end;
+  }
+
+  .dash-continue-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
