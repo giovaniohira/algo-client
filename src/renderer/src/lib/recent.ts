@@ -56,6 +56,7 @@ export function recordSubmission(
     const list = loadRecent()
     const next = [entry, ...list.filter((e) => e.slug !== slug || e.at !== entry.at)].slice(0, MAX_RECENT)
     localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+    bumpActivityDay(new Date())
   } catch {
     /* ponytail: quota */
   }
@@ -68,4 +69,49 @@ export function loadRecent(): RecentEntry[] {
   } catch {
     return []
   }
+}
+const ACTIVITY_KEY = 'algo-activity'
+
+function bumpActivityDay(d: Date): void {
+  const key = d.toISOString().slice(0, 10)
+  try {
+    const raw = localStorage.getItem(ACTIVITY_KEY)
+    const map = raw ? (JSON.parse(raw) as Record<string, number>) : {}
+    map[key] = (map[key] ?? 0) + 1
+    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(map))
+  } catch {
+    /* ponytail: quota */
+  }
+}
+
+/** Last 52 weeks Ã— 7 days, row-major (week columns). */
+export function activityHeatmap(): number[][] {
+  const map: Record<string, number> = {}
+  try {
+    const raw = localStorage.getItem(ACTIVITY_KEY)
+    if (raw) Object.assign(map, JSON.parse(raw) as Record<string, number>)
+  } catch {
+    /* ignore */
+  }
+
+  const weeks: number[][] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const start = new Date(today)
+  start.setDate(start.getDate() - 52 * 7 + 1)
+
+  for (let w = 0; w < 52; w++) {
+    const col: number[] = []
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(start)
+      day.setDate(start.getDate() + w * 7 + d)
+      if (day > today) {
+        col.push(0)
+        continue
+      }
+      col.push(map[day.toISOString().slice(0, 10)] ?? 0)
+    }
+    weeks.push(col)
+  }
+  return weeks
 }
