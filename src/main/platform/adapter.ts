@@ -1,4 +1,4 @@
-﻿import { LeetCode, Credential } from 'leetcode-query'
+import { LeetCode, Credential } from 'leetcode-query'
 import type { AccountSession } from '../auth'
 import { formatSolutionContent } from './solution-content'
 
@@ -206,6 +206,8 @@ export class PlatformAdapter {
     avatarUrl: string
     isPremium: boolean
     submissionCalendar: string
+    badges: Array<{ id: string; displayName: string; icon: string; creationDate?: string }>
+    activeBadge: { id: string; displayName: string; icon: string; creationDate?: string } | null
   }> {
     const userStatus = await this.client.whoami()
     if (!userStatus?.isSignedIn) throw new Error('Session expired')
@@ -215,17 +217,39 @@ export class PlatformAdapter {
     const matched = profile.matchedUser as {
       submitStats?: { acSubmissionNum?: Array<{ difficulty: string; count: number }> }
       submissionCalendar?: string
+      badges?: Array<{ id: string; displayName: string; icon: string; creationDate?: string }>
+      activeBadge?: { id: string; displayName: string; icon: string; creationDate?: string } | null
       profile?: { ranking?: number; userAvatar?: string }
     } | null
-    const solved =
-      matched?.submitStats?.acSubmissionNum?.find((s) => s.difficulty === 'All')?.count ?? 0
+    const byDifficulty = (d: string) =>
+      matched?.submitStats?.acSubmissionNum?.find((s) => s.difficulty === d)?.count ?? 0
+
+    const normalizeBadge = (
+      b: { id?: string; displayName?: string; icon?: string; creationDate?: string } | null | undefined
+    ) => {
+      if (!b?.id || !b.displayName) return null
+      return {
+        id: b.id,
+        displayName: b.displayName,
+        icon: b.icon ?? '',
+        creationDate: b.creationDate
+      }
+    }
+
+    const badges = (matched?.badges ?? []).map(normalizeBadge).filter((b): b is NonNullable<typeof b> => b != null)
 
     return {
       username,
       ranking: matched?.profile?.ranking ?? 0,
-      solved,
+      solved: byDifficulty('All'),
+      solvedEasy: byDifficulty('Easy'),
+      solvedMedium: byDifficulty('Medium'),
+      solvedHard: byDifficulty('Hard'),
       avatarUrl: matched?.profile?.userAvatar ?? '',
-      isPremium: Boolean(userStatus.isPremium)
+      isPremium: Boolean(userStatus.isPremium),
+      submissionCalendar: matched?.submissionCalendar ?? '{}',
+      badges,
+      activeBadge: normalizeBadge(matched?.activeBadge)
     }
   }
 
