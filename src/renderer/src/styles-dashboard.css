@@ -290,3 +290,63 @@
   color: var(--lc-orange);
 }
 
+/* â”€â”€ Progress ring â”€â”€ */
+
+.dash-ring {
+  position: relative;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(255, 157, 0, 0.2));
+}
+
+.dash-ring svg {
+  transform: rotate(-90deg);
+}
+
+.dash-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 7;
+}
+
+.dash-ring-fill {
+  fill: none;
+  stroke: url(#dash-ring-gradient);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s var(--motion-ease);
+}
+
+.dash-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+  padding: 18px;
+}
+
+.dash-ring-caption {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.dash-ring-label strong {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--lc-orange-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-ring-label span:not(.dash-ring-caption) {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
