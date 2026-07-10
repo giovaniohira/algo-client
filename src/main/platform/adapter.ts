@@ -205,6 +205,7 @@ export class PlatformAdapter {
     solvedHard: number
     avatarUrl: string
     isPremium: boolean
+    submissionCalendar: string
   }> {
     const userStatus = await this.client.whoami()
     if (!userStatus?.isSignedIn) throw new Error('Session expired')
@@ -213,6 +214,7 @@ export class PlatformAdapter {
     const profile = await this.client.user(username)
     const matched = profile.matchedUser as {
       submitStats?: { acSubmissionNum?: Array<{ difficulty: string; count: number }> }
+      submissionCalendar?: string
       profile?: { ranking?: number; userAvatar?: string }
     } | null
     const solved =
