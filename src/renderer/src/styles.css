@@ -1,15 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   color-scheme: dark;
-  --bg: #121212;
-  --surface: #1a1a1a;
-  --surface-2: #222222;
-  --border: #2a2a2a;
-  --border-hover: #3a3a3a;
-  --text: #fafafa;
-  --text-secondary: #a3a3a3;
-  --text-muted: #737373;
+  --bg: #111111;
+  --surface: #171717;
+  --surface-2: #202020;
+  --border: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --text: #ffffff;
+  --text-secondary: #9a9a9a;
+  --text-muted: #6b6b6b;
   --accent: #3b82f6;
   --accent-hover: #2563eb;
   --success: #22c55e;
@@ -18,8 +18,8 @@
   --easy: #22c55e;
   --medium: #eab308;
   --hard: #ef4444;
-  --radius: 8px;
-  --radius-lg: 12px;
+  --radius: 16px;
+  --radius-lg: 20px;
   --motion-duration: 0.42s;
   --motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -75,7 +75,7 @@ body,
   75% { content: '...'; }
 }
 
-/* ── Title bar (frameless window) ── */
+/* â”€â”€ Title bar (frameless window) â”€â”€ */
 
 .titlebar {
   -webkit-app-region: drag;
@@ -160,7 +160,7 @@ body,
   color: #fff;
 }
 
-/* ── App shell ── */
+/* â”€â”€ App shell â”€â”€ */
 
 .app {
   display: flex;
@@ -169,7 +169,7 @@ body,
   min-height: 100vh;
 }
 
-/* ── Header ── */
+/* â”€â”€ Header â”€â”€ */
 
 .header {
   display: flex;
@@ -254,7 +254,7 @@ body,
   color: var(--text-secondary);
 }
 
-/* ── Problem list ── */
+/* â”€â”€ Problem list â”€â”€ */
 
 .problem-list-btn {
   display: flex;
@@ -900,7 +900,7 @@ body,
 .diff-dot.medium { background: var(--medium); }
 .diff-dot.hard { background: var(--hard); }
 
-/* ── Workspace ── */
+/* â”€â”€ Workspace â”€â”€ */
 
 .workspace {
   display: flex;
@@ -1530,7 +1530,7 @@ body,
   max-height: 280px;
 }
 
-/* ── Editor ── */
+/* â”€â”€ Editor â”€â”€ */
 
 .editor-pane {
   display: flex;
@@ -1633,7 +1633,7 @@ body,
   line-height: 1;
 }
 
-/* ── Output panel ── */
+/* â”€â”€ Output panel â”€â”€ */
 
 .output-panel {
   display: flex;
@@ -1985,7 +1985,7 @@ body,
   color: var(--accent-hover);
 }
 
-/* ── Buttons ── */
+/* â”€â”€ Buttons â”€â”€ */
 
 .btn {
   display: inline-flex;
@@ -2063,7 +2063,7 @@ body,
   padding: 10px 16px;
 }
 
-/* ── Result toast ── */
+/* â”€â”€ Result toast â”€â”€ */
 
 .result-toast {
   position: absolute;
@@ -2125,7 +2125,7 @@ body,
   white-space: pre-wrap;
 }
 
-/* ── Motion (transform only — opacity breaks when window is backgrounded during login) ── */
+/* â”€â”€ Motion (transform only â€” opacity breaks when window is backgrounded during login) â”€â”€ */
 
 @keyframes motion-rise {
   from {
@@ -2172,7 +2172,7 @@ body,
   }
 }
 
-/* ── Login (split editorial) ── */
+/* â”€â”€ Login (split editorial) â”€â”€ */
 
 .login-layout {
   display: grid;
@@ -2443,7 +2443,7 @@ body,
   color: var(--error);
 }
 
-/* ── Scrollbar ── */
+/* â”€â”€ Scrollbar â”€â”€ */
 
 ::-webkit-scrollbar {
   width: 6px;
