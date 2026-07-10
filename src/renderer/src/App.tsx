@@ -4,6 +4,9 @@ import { CodeEditor } from './components/CodeEditor'
 import { LoginScreen } from './components/LoginScreen'
 import { ElectronRequired } from './components/ElectronRequired'
 import { Header } from './components/Header'
+import { AppNav, type AppView } from './components/AppNav'
+import { HomeScreen } from './components/HomeScreen'
+import { ProfileScreen } from './components/ProfileScreen'
 import { hasApi, api } from './lib/api'
 import { TitleBar } from './components/TitleBar'
 import { TitleBarBrand } from './components/TitleBarBrand'
@@ -11,6 +14,7 @@ import { ProblemPicker } from './components/ProblemPicker'
 import { OutputPanel } from './components/OutputPanel'
 import { ProblemSidebar } from './components/ProblemSidebar'
 import { loadDraft, saveDraft } from './lib/drafts'
+import { ensureFirstLogin, latestDraftTouch, recordSubmission, touchDraft } from './lib/recent'
 import { isSessionError, isLoginCancelled } from './lib/session'
 import { ensureMonaco } from './lib/monaco-setup'
 import { useSplitResize } from './lib/split-resize'
@@ -35,6 +39,7 @@ function starterFor(problem: ProblemDetail, langSlug: string): string {
 
 export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [view, setView] = useState<AppView>('home')
   const [loading, setLoading] = useState(true)
   const [slugInput, setSlugInput] = useState('two-sum')
   const [problem, setProblem] = useState<ProblemDetail | null>(null)
@@ -119,6 +124,7 @@ export default function App() {
       const status = await api().authStatus()
       if (status.authenticated) {
         setProfile(status.profile)
+        ensureFirstLogin()
       } else {
         setProfile(null)
         if (status.error) setError(status.error)
@@ -163,6 +169,8 @@ export default function App() {
     try {
       const p = await api().authLogin()
       setProfile(p)
+      ensureFirstLogin()
+      setView('home')
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       if (isLoginCancelled(message)) return
@@ -196,6 +204,7 @@ export default function App() {
       setTestInput(cases[0] ?? p.sampleTestCase)
       const draft = loadDraft(p.slug, lang)
       setCode(draft ?? starter)
+      touchDraft(p.slug, lang)
     } catch (e) {
       handleError(e, 'Failed to load problem')
     } finally {
@@ -204,9 +213,25 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (profile && !problem && !busy) void loadProblem('two-sum')
+    if (view !== 'workspace' || problem || busy) return
+    const touch = latestDraftTouch()
+    if (touch) void loadProblem(touch.slug)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile])
+  }, [view, profile])
+
+  const openProblem = (slug: string) => {
+    setView('workspace')
+    void loadProblem(slug)
+  }
+
+  const openRandomProblem = () => {
+    if (problemSlugs.length === 0) {
+      setView('workspace')
+      return
+    }
+    const slug = problemSlugs[Math.floor(Math.random() * problemSlugs.length)]
+    openProblem(slug)
+  }
 
   const handleLangChange = (newLang: string) => {
     if (problem) saveDraft(problem.slug, lang, code)
@@ -262,7 +287,10 @@ export default function App() {
       setRunResult(result)
       setRunTick((n) => n + 1)
       setSubmitOutcome(outcome)
-      if (problem) saveDraft(problem.slug, lang, code)
+      if (problem) {
+        saveDraft(problem.slug, lang, code)
+        recordSubmission(problem.slug, problem.title, problem.difficulty, outcome, lang)
+      }
     } catch (e) {
       handleError(e, 'Submit failed')
     } finally {
@@ -345,132 +373,165 @@ export default function App() {
         </div>
       )}
 
-      <ProblemPicker
-        problem={problem}
-        busy={busy}
-        isPremium={profile.isPremium}
-        onSelect={(slug) => void loadProblem(slug)}
-      >
-        {(parts) => (
-          <>
-            <Header profile={profile} onLogout={() => void handleLogout()} leftSlot={parts.trigger} />
-            {parts.panel}
-          </>
-        )}
-      </ProblemPicker>
+      <div className="app-shell">
+        <AppNav active={view} onNavigate={setView} />
 
-      <div className="workspace screen-body" ref={workspaceRef}>
-        <aside className="sidebar" style={{ width: sidebarSplit.size }}>
-          {problem ? (
-            <ProblemSidebar problem={problem} />
-          ) : (
-            <div className="empty-state">
-              <p>Search for a problem in the header to get started.</p>
-              {problemTotal === 0 && (
-                <p className="muted">No local catalog — sync problems to browse the full list.</p>
-              )}
-            </div>
-          )}
-        </aside>
-
-        <div
-          className="split-handle split-handle-v"
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize problem panel"
-          onPointerDown={sidebarSplit.startDrag}
-        />
-
-        <main className="editor-pane">
-          <div className="editor-toolbar">
-            <div className="problem-nav">
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                disabled={!hasPrev || busy}
-                onClick={() => navigateProblem(-1)}
-                title="Previous problem (Alt+←)"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                disabled={!hasNext || busy}
-                onClick={() => navigateProblem(1)}
-                title="Next problem (Alt+→)"
-              >
-                ›
-              </button>
-            </div>
-
-            <select
-              className="lang-select"
-              value={lang}
-              onChange={(e) => handleLangChange(e.target.value)}
-              disabled={busy}
-            >
-              {LANGS.map((l) => (
-                <option key={l.slug} value={l.slug}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-
-            <div className="spacer" />
-
-            <button className="btn btn-run" onClick={() => void handleRun()} disabled={!problem || busy} title="Ctrl+'">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              Run
-            </button>
-            <button
-              className="btn btn-submit"
-              onClick={() => void handleSubmit()}
-              disabled={!problem || busy}
-              title="Ctrl+Enter"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-              Submit
-            </button>
-          </div>
-
-          <div className="editor-stack" ref={editorStackRef}>
-            <div className="editor-wrap">
-              <CodeEditor lang={lang} code={code} onChange={handleCodeChange} />
-            </div>
-
-            <div
-              className="split-handle split-handle-h"
-              role="separator"
-              aria-orientation="horizontal"
-              aria-label="Resize output panel"
-              onPointerDown={outputSplit.startDrag}
-            />
-
-            <div
-              className="output-resize-wrap"
-              style={{ height: outputCollapsed ? OUTPUT_HEADER_H : outputSplit.size }}
-            >
-              <OutputPanel
-                error={error}
-                runResult={runResult}
-                submitOutcome={submitOutcome}
-                testInput={testInput}
-                onTestInputChange={setTestInput}
-                sampleTestCase={problem?.sampleTestCase ?? ''}
-                exampleTestcases={problem?.exampleTestcases ?? ''}
-                starterCode={problem ? starterFor(problem, lang) : ''}
-                collapsed={outputCollapsed}
-                onCollapsedChange={setOutputCollapsed}
-                runTick={runTick}
+        <div className="app-shell-main">
+          {view === 'home' && (
+            <div className="dash-view">
+              <TitleBar minimal />
+              <HomeScreen
+                profile={profile}
+                onOpenProblem={openProblem}
+                onOpenProfile={() => setView('profile')}
+                onBrowse={() => setView('workspace')}
+                onRandom={openRandomProblem}
               />
             </div>
-          </div>
-        </main>
+          )}
+
+          {view === 'profile' && (
+            <div className="dash-view">
+              <TitleBar minimal />
+              <ProfileScreen
+                profile={profile}
+                onLogout={() => void handleLogout()}
+              />
+            </div>
+          )}
+
+          {view === 'workspace' && (
+            <div className="app-workspace">
+              <ProblemPicker
+                problem={problem}
+                busy={busy}
+                isPremium={profile.isPremium}
+                onSelect={(slug) => void loadProblem(slug)}
+              >
+                {(parts) => (
+                  <>
+                    <Header profile={profile} onLogout={() => void handleLogout()} leftSlot={parts.trigger} />
+                    {parts.panel}
+                  </>
+                )}
+              </ProblemPicker>
+
+              <div className="workspace screen-body" ref={workspaceRef}>
+                <aside className="sidebar" style={{ width: sidebarSplit.size }}>
+                  {problem ? (
+                    <ProblemSidebar problem={problem} />
+                  ) : (
+                    <div className="empty-state">
+                      <p>Escolha um problema no header para começar.</p>
+                      {problemTotal === 0 && (
+                        <p className="muted">Sem catálogo local — sincronize para navegar a lista completa.</p>
+                      )}
+                    </div>
+                  )}
+                </aside>
+
+                <div
+                  className="split-handle split-handle-v"
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="Resize problem panel"
+                  onPointerDown={sidebarSplit.startDrag}
+                />
+
+                <main className="editor-pane">
+                  <div className="editor-toolbar">
+                    <div className="problem-nav">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        disabled={!hasPrev || busy}
+                        onClick={() => navigateProblem(-1)}
+                        title="Previous problem (Alt+←)"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        disabled={!hasNext || busy}
+                        onClick={() => navigateProblem(1)}
+                        title="Next problem (Alt+→)"
+                      >
+                        ›
+                      </button>
+                    </div>
+
+                    <select
+                      className="lang-select"
+                      value={lang}
+                      onChange={(e) => handleLangChange(e.target.value)}
+                      disabled={busy}
+                    >
+                      {LANGS.map((l) => (
+                        <option key={l.slug} value={l.slug}>
+                          {l.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="spacer" />
+
+                    <button className="btn btn-run" onClick={() => void handleRun()} disabled={!problem || busy} title="Ctrl+'">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      Run
+                    </button>
+                    <button
+                      className="btn btn-submit"
+                      onClick={() => void handleSubmit()}
+                      disabled={!problem || busy}
+                      title="Ctrl+Enter"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      Submit
+                    </button>
+                  </div>
+
+                  <div className="editor-stack" ref={editorStackRef}>
+                    <div className="editor-wrap">
+                      <CodeEditor lang={lang} code={code} onChange={handleCodeChange} />
+                    </div>
+
+                    <div
+                      className="split-handle split-handle-h"
+                      role="separator"
+                      aria-orientation="horizontal"
+                      aria-label="Resize output panel"
+                      onPointerDown={outputSplit.startDrag}
+                    />
+
+                    <div
+                      className="output-resize-wrap"
+                      style={{ height: outputCollapsed ? OUTPUT_HEADER_H : outputSplit.size }}
+                    >
+                      <OutputPanel
+                        error={error}
+                        runResult={runResult}
+                        submitOutcome={submitOutcome}
+                        testInput={testInput}
+                        onTestInputChange={setTestInput}
+                        sampleTestCase={problem?.sampleTestCase ?? ''}
+                        exampleTestcases={problem?.exampleTestcases ?? ''}
+                        starterCode={problem ? starterFor(problem, lang) : ''}
+                        collapsed={outputCollapsed}
+                        onCollapsedChange={setOutputCollapsed}
+                        runTick={runTick}
+                      />
+                    </div>
+                  </div>
+                </main>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
