@@ -21,7 +21,7 @@
     "sync-problems": "tsx scripts/sync-problems.ts",
     "export-logos": "tsx scripts/export-logos.ts",
     "dist": "npm run export-logos && npm run build && electron-builder",
-    "dist:win": "npm run export-logos && npm run build && electron-builder --win"
+    "dist:win": "npm run export-logos && npm run build && electron-builder --win --publish never"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -73,7 +73,6 @@
         "nsis"
       ],
       "artifactName": "${productName}-${version}-setup.${ext}",
-      "publisherName": "Giovani Ohira",
       "signAndEditExecutable": true
     },
     "mac": {
